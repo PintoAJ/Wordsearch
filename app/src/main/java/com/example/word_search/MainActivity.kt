@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.word_search.GridItem
+import android.util.Log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +47,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun InitGrid() {
-    val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val gridSize = 30
+    val gridLength = 10
+    val items: List<GridItem> = getLetters(gridSize)
+
+    println(items)
 
     Box(
         modifier = Modifier
@@ -53,35 +60,32 @@ fun InitGrid() {
         contentAlignment = Alignment.Center
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(10),
+            columns = GridCells.Fixed(gridLength),
             contentPadding = PaddingValues(1.dp),
             verticalArrangement = Arrangement.Center,
         ) {
-            items(100) { index ->
-                Box(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .clickable(onClick = {
-                            println("$index was clicked")
-                        }),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val id = index
-                    Text("$id")
-                }
+            items(items) {
+                Item(item = it)
             }
         }
     }
 }
 
-@Composable
-fun testClick(id: String){
+fun getLetters(gridSize: Int): List<GridItem> {
+    val items = mutableListOf<GridItem>()
+    val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+    for (i in 1..gridSize){
+        items.add(GridItem(i, letters[(0..25).random()].toString()))
+    }
+
+    println("List of GridItem has been created")
+
+    return items
 }
 
 @Preview
 @Composable
 fun Preview() {
     InitGrid()
-    // Text(text = letters[(0..25).random()].toString())
 }
