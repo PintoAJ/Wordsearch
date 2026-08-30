@@ -1,5 +1,6 @@
 package com.example.word_search
 
+import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.word_search.GridItem
 import android.util.Log
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,39 +54,56 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun InitGrid() {
-    val gridSize = 30
-    val gridLength = 10
-    val items: List<GridItem> = getLetters(gridSize)
+    val gridLength = 5
+    val gridData: List<GridData> = remember { getLetters(gridLength * gridLength)}
+    val bgColor = Color.Green
+    var id by remember { mutableIntStateOf(-1) }
+    var letter by remember {mutableStateOf("")}
 
-    println(items)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.Green),
-        contentAlignment = Alignment.Center
+            .background(color = bgColor),
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(gridLength),
-            contentPadding = PaddingValues(1.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(Color.White)
         ) {
-            items(items) {
-                Item(item = it)
+            items(gridData, key = {item -> item.id}) {data ->
+                GridItem(
+                    item = data,
+                    onClick = {
+                        id = data.id
+                        letter = data.letter
+                    }
+                )
+            }
+        }
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(200.dp)
+                .background(Color.LightGray)
+                .align(Alignment.TopCenter)
+        ) {
+            if (id != -1 && letter != ""){
+                Text("GridCell #$id: $letter")
             }
         }
     }
 }
 
-fun getLetters(gridSize: Int): List<GridItem> {
-    val items = mutableListOf<GridItem>()
+fun getLetters(gridSize: Int): List<GridData> {
+    val items = mutableListOf<GridData>()
     val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     for (i in 1..gridSize){
-        items.add(GridItem(i, letters[(0..25).random()].toString()))
+        items.add(GridData(i, letters[(0..25).random()].toString()))
     }
-
-    println("List of GridItem has been created")
 
     return items
 }

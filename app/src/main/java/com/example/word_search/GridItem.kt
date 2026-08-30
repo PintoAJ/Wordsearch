@@ -4,21 +4,37 @@ import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Text
 
-data class GridItem(
+data class GridData(
     val id: Int,
     val letter: String,
-    val color: Color = Color.White
 )
 
 @Composable
-fun Item(
-    modifier: Modifier = Modifier,
-    item: GridItem
+fun GridButton(
+    letter: String,
+    onClick: () -> Unit
 ) {
-    Box(
+    Button(
+        onClick = onClick,
         modifier = Modifier
-            .background(item.color)
-    )
+            .background(Color.White),
+        colors = ButtonColors(Color.White,
+            Color.Black,
+            Color.White,
+            Color.Black)){
+        Text(text = letter)
+    }
+}
+
+@Composable
+fun GridItem(
+    modifier: Modifier = Modifier,
+    item: GridData,
+    onClick: () -> Unit
+) {
+    GridButton(item.letter, onClick)
 }
