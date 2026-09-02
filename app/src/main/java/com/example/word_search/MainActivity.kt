@@ -33,9 +33,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.word_search.GridItem
 import android.util.Log
+import androidx.collection.mutableIntListOf
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,12 +57,19 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun InitGrid() {
-    val gridLength = 5
-    val gridData: List<GridData> = remember { getLetters(gridLength * gridLength)}
+    val gridLength = 10
+    val gridData: List<GridData> = remember { testGrid(gridLength) }
     val bgColor = Color.Green
-    var id by remember { mutableIntStateOf(-1) }
-    var letter by remember {mutableStateOf("")}
 
+    var id by remember { mutableIntStateOf(-1) }
+    var id2 by remember { mutableIntStateOf(-1) }
+    var cell by remember { mutableIntStateOf(-1) }
+    var cell2 by remember { mutableIntStateOf(-1) }
+    var pairs = remember { mutableStateListOf<List<Int>>() }
+//    var cur_pair = remember { mutableStateListOf<Int>() }
+
+    // test values
+    pairs.add(listOf(1,6))
 
     Box(
         modifier = Modifier
@@ -68,6 +78,7 @@ fun InitGrid() {
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(gridLength),
+            contentPadding = PaddingValues(0.dp),
             modifier = Modifier
                 .align(Alignment.Center)
                 .background(Color.White)
@@ -76,8 +87,13 @@ fun InitGrid() {
                 GridItem(
                     item = data,
                     onClick = {
-                        id = data.id
-                        letter = data.letter
+//                        cur_pair.add(data.id)
+                        if (id == -1) {
+                            id = data.id
+                        } else {
+                            id2 = data.id
+                        }
+
                     }
                 )
             }
@@ -86,23 +102,90 @@ fun InitGrid() {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(200.dp)
+                .padding(top = 20.dp)
+                .height(100.dp)
+                .width(200.dp)
                 .background(Color.LightGray)
                 .align(Alignment.TopCenter)
         ) {
-            if (id != -1 && letter != ""){
-                Text("GridCell #$id: $letter")
+            //Text("Something")
+            // check for valid pair
+            if (id != -1 && id2 != -1) {
+                for (pair in pairs) {
+//                    if (cur_pair[0] == pair[0] && cur_pair[1] == pair[1]) {
+//                        id = pair[0]
+//                        id2 = pair[1]
+//
+//                        cur_pair.clear()
+//                        break
+//                    }
+
+                    if (pair[0] == id && pair[1] == id2) {
+                        cell = id
+                        cell2 = id2
+                        break
+                    }
+                }
+
+                id = -1
+                id2 = -1
+            }
+
+            if (cell != -1 && cell2 != -1){
+                Text("id: $id, id2: $id2 \nWord found between grid cells #$cell and #$cell2")
             }
         }
     }
 }
 
-fun getLetters(gridSize: Int): List<GridData> {
+/**
+ * For testing purposes
+ */
+fun randomLetters(gridLength: Int): List<GridData> {
     val items = mutableListOf<GridData>()
+    val gridSize = gridLength * gridLength
     val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     for (i in 1..gridSize){
         items.add(GridData(i, letters[(0..25).random()].toString()))
+    }
+
+    return items
+}
+
+/**
+ * For testing purposes. Tests the grid with words
+ */
+fun testGrid(gridLength: Int): List<GridData> {
+    val rows = mutableListOf<StringBuilder>()
+    val items = mutableListOf<GridData>()
+    val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    for (i in 1..gridLength) {
+        rows.add(StringBuilder(".".repeat(gridLength)))
+    }
+
+    // add words at predetermined locations
+    var temp = "BANANA"
+
+    for (i in 0..temp.length-1) {
+        rows[0][i] = temp[i]
+    }
+
+    // converts list of StringBuilder's to GridData
+    var count = 1
+
+    for (row in rows) {
+        for (char in row) {
+            var c = char.toString()
+
+            if (c == ".") {
+                c = letters[(0..25).random()].toString()
+            }
+
+            items.add(GridData(count, c))
+            count++
+        }
     }
 
     return items
