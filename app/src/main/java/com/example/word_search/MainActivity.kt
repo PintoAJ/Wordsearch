@@ -66,7 +66,6 @@ fun InitGrid() {
     var cell by remember { mutableIntStateOf(-1) }
     var cell2 by remember { mutableIntStateOf(-1) }
     var pairs = remember { mutableStateListOf<List<Int>>() }
-//    var cur_pair = remember { mutableStateListOf<Int>() }
 
     // test values
     pairs.add(listOf(1,6))
@@ -108,18 +107,9 @@ fun InitGrid() {
                 .background(Color.LightGray)
                 .align(Alignment.TopCenter)
         ) {
-            //Text("Something")
             // check for valid pair
             if (id != -1 && id2 != -1) {
                 for (pair in pairs) {
-//                    if (cur_pair[0] == pair[0] && cur_pair[1] == pair[1]) {
-//                        id = pair[0]
-//                        id2 = pair[1]
-//
-//                        cur_pair.clear()
-//                        break
-//                    }
-
                     if (pair[0] == id && pair[1] == id2) {
                         cell = id
                         cell2 = id2
