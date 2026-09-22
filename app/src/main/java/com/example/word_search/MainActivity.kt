@@ -1,5 +1,6 @@
 package com.example.word_search
 
+import android.content.Context
 import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -72,18 +73,56 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Word_SearchTheme {
-                //initDB(db.dao)
-                viewModel.initDB()
-                InitGrid()
+                val wordMap: MutableMap<Int, MutableList<String>> = loadWords(this, "wordbank.txt")
+                Log.d("test", "Length: " + wordMap.size)
+
+                for ((num, list) in wordMap) {
+                    Log.d("test", "$num: " + list[0] + ", " + list[list.size - 1])
+                }
+
+                InitGrid(wordMap)
             }
         }
     }
 }
 
+/**
+ * Loads words from the word bank and sorts them into a dictionary by length
+ */
+fun loadWords(context: Context, filename: String): MutableMap<Int, MutableList<String>> {
+    var wordList = listOf<String>()
+    val wordMap = mutableMapOf<Int, MutableList<String>>()
+
+    // read text file for list of words
+    try {
+        context.assets.open(filename).bufferedReader().useLines { lines ->
+            wordList = lines.toList() // Converts each line of the file into a list element
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    // organize words by length
+    for (word in wordList) {
+
+        // words must be 3 to 10 letters long
+        if (word.length in 3..10) {
+
+            if (word.length in wordMap) {
+                wordMap[word.length]?.add(word)
+            } else {
+                wordMap[word.length] = mutableListOf(word)
+            }
+        }
+    }
+
+    return wordMap
+}
+
 @Composable
-fun InitGrid() {
+fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     val gridLength = 10
-    val gridData: List<GridData> = remember { testGrid(gridLength) }
+    val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
     val bgColor = Color.Green
 
     var id by remember { mutableIntStateOf(-1) }
@@ -154,6 +193,41 @@ fun InitGrid() {
 }
 
 /**
+ * For testing purposes. Tests the grid with words
+ */
+fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int): List<GridData> {
+    val rows = mutableListOf<StringBuilder>()
+    val items = mutableListOf<GridData>()
+    val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    for (i in 1..gridLength) {
+        rows.add(StringBuilder(".".repeat(gridLength)))
+    }
+
+    // add words into the empty grid
+    
+
+    // converts list of StringBuilder's to GridData
+    var count = 1
+
+    for (row in rows) {
+        for (char in row) {
+            var c = char.toString()
+            val r = (0..25).random()
+
+            if (c == ".") {
+                c = letters[r].toString()
+            }
+
+            items.add(GridData(count, c))
+            count++
+        }
+    }
+
+    return items
+}
+
+/**
  * For testing purposes
  */
 fun randomLetters(gridLength: Int): List<GridData> {
@@ -168,46 +242,9 @@ fun randomLetters(gridLength: Int): List<GridData> {
     return items
 }
 
-/**
- * For testing purposes. Tests the grid with words
- */
-fun testGrid(gridLength: Int): List<GridData> {
-    val rows = mutableListOf<StringBuilder>()
-    val items = mutableListOf<GridData>()
-    val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-    for (i in 1..gridLength) {
-        rows.add(StringBuilder(".".repeat(gridLength)))
-    }
-
-    // add words at predetermined locations
-    var temp = "BANANA"
-
-    for (i in 0..temp.length-1) {
-        rows[0][i] = temp[i]
-    }
-
-    // converts list of StringBuilder's to GridData
-    var count = 1
-
-    for (row in rows) {
-        for (char in row) {
-            var c = char.toString()
-
-            if (c == ".") {
-                c = letters[(0..25).random()].toString()
-            }
-
-            items.add(GridData(count, c))
-            count++
-        }
-    }
-
-    return items
-}
-
 @Preview
 @Composable
 fun Preview() {
-    InitGrid()
+    val wordMap: MutableMap<Int, MutableList<String>> = loadWords(this, "wordbank.txt")
+    InitGrid(wordMap)
 }

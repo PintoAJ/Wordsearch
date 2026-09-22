@@ -1,5 +1,6 @@
 package com.example.word_search
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -12,18 +13,15 @@ class WordViewModel(
 
     fun initDB() {
         // route: app/src/main/res/wordbank.txt
-        val dir = System.getProperty("user.dir")
-        Log.d("test", dir.toString())
+        val file = File("app/src/main/res/wordbank.txt")
+        Log.d("test", file.name)
 
-        val folder = File(dir)
-        Log.d("test", folder.name)
+        Log.d("test", "Exists: " + file.exists())
+        Log.d("test","Path: "+ file.path)
+        Log.d("test","Can Read: " + file.canRead().toString())
 
-        folder.listFiles()?.forEach { file ->
-            Log.d("test", file.name)
-        }
-
-        val result = folder.listFiles()?.filter { it.isFile }?: emptyList()
-        Log.d("test", result.toString())
+        val currentPath = System.getProperty("user.dir")
+        Log.d("test", "Current Directory: $currentPath")
 
 //        val file = File("/app/src/main/res/wordbank.txt")
 //
