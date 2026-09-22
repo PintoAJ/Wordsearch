@@ -10,6 +10,9 @@ interface WordDao {
     @Upsert
     suspend fun insertWord(word: Word)
 
-    @Query("SELECT * FROM words WHERE length = :length")
+    @Query("SELECT * FROM word WHERE length = :length")
     suspend fun getWordsByLength(length: Int): List<Word>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM word LIMIT 1)")
+    suspend fun isPopulated(): Boolean
 }

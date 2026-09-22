@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.word_search.GridItem
 import android.util.Log
+import androidx.activity.viewModels
 import androidx.collection.mutableIntListOf
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,13 +43,37 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
+import java.io.File
 
 class MainActivity : ComponentActivity() {
+    private val db by lazy {
+        Room.databaseBuilder(
+            applicationContext,
+            WordDatabase::class.java,
+            "words.db"
+        ).build()
+    }
+
+    private val viewModel by viewModels<WordViewModel>(
+        factoryProducer = {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return WordViewModel(db.dao) as T
+                }
+            }
+        }
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             Word_SearchTheme {
+                //initDB(db.dao)
+                viewModel.initDB()
                 InitGrid()
             }
         }
@@ -65,7 +90,7 @@ fun InitGrid() {
     var id2 by remember { mutableIntStateOf(-1) }
     var cell by remember { mutableIntStateOf(-1) }
     var cell2 by remember { mutableIntStateOf(-1) }
-    var pairs = remember { mutableStateListOf<List<Int>>() }
+    val pairs = remember { mutableStateListOf<List<Int>>() }
 
     // test values
     pairs.add(listOf(1,6))
