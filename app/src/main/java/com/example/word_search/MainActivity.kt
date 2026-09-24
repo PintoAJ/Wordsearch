@@ -48,6 +48,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.Room
 import java.io.File
+import com.example.word_search.Direction
 
 class MainActivity : ComponentActivity() {
     private val db by lazy {
@@ -122,7 +123,9 @@ fun loadWords(context: Context, filename: String): MutableMap<Int, MutableList<S
 @Composable
 fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     val gridLength = 10
-    val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
+    val targetWords = 5
+    //val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
+    val gridData: List<GridData> = getLetters(wordMap, gridLength, targetWords)
     val bgColor = Color.Green
 
     var id by remember { mutableIntStateOf(-1) }
@@ -131,7 +134,7 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     var cell2 by remember { mutableIntStateOf(-1) }
     val pairs = remember { mutableStateListOf<List<Int>>() }
 
-    // test values
+    // test v
     pairs.add(listOf(1,6))
 
     Box(
@@ -195,32 +198,61 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
 /**
  * For testing purposes. Tests the grid with words
  */
-fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int): List<GridData> {
+fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, targetWords: Int): List<GridData> {
     val rows = mutableListOf<StringBuilder>()
     val items = mutableListOf<GridData>()
     val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val pairs = mutableStateListOf<List<Int>>()
 
     for (i in 1..gridLength) {
         rows.add(StringBuilder(".".repeat(gridLength)))
     }
 
     // add words into the empty grid
-    
+    var count = 0
+
+    while (count < targetWords) {
+        val row = (0..<gridLength).random()
+        val col = (0..<gridLength).random()
+
+        // determine direction
+        val data = Direction.getDirection(gridLength, row, col).shuffled()
+
+        for ((dir, len) in data) {
+            val constraints = mutableMapOf<Int, String>()
+
+            // calculate letter constraints
+            for (i in (0..<len)) {
+                val r2 = row + (dir.dy * i)
+                val c2 = row + (dir.dx * i)
+                val letter = rows[r2][c2].toString()
+
+                if (letter != ".") {
+                    constraints[i] = letter
+                }
+            }
+        }
+
+        // check all words of that length
+            // verify that any fixed letters are in the correct spot for a chosen word
+        // if word placed successfully, increment count and store coordinate points
+            // else, repeat process for a smaller word
+            // NOTE: for optimization purposes, the loop may simply select a new starting coordinate and direction
+    }
 
     // converts list of StringBuilder's to GridData
-    var count = 1
+    var index = 1
 
     for (row in rows) {
         for (char in row) {
             var c = char.toString()
-            val r = (0..25).random()
 
             if (c == ".") {
-                c = letters[r].toString()
+                c = letters.random().toString()
             }
 
-            items.add(GridData(count, c))
-            count++
+            items.add(GridData(index, c))
+            index++
         }
     }
 
