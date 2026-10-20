@@ -3,9 +3,9 @@ package com.example.word_search
 import kotlin.enums.enumEntries
 
 enum class Direction(val dx: Int, val dy: Int) {
-    Down(0, -1),
+    Down(0, 1),
     Right(1, 0),
-    Up(0, 1),
+    Up(0, -1),
     Left(-1, 0);
 
     companion object {
