@@ -75,10 +75,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             Word_SearchTheme {
                 val wordMap: MutableMap<Int, MutableList<String>> = loadWords(this, "wordbank.txt")
-                Log.d("test", "Length: " + wordMap.size)
+                Log.d("wordbank", "Length: " + wordMap.size)
 
                 for ((num, list) in wordMap) {
-                    Log.d("test", "$num: " + list[0] + ", " + list[list.size - 1])
+                    Log.d("wordbank", "$num: " + list[0] + ", " + list[list.size - 1])
                 }
 
                 InitGrid(wordMap)
@@ -123,16 +123,16 @@ fun loadWords(context: Context, filename: String): MutableMap<Int, MutableList<S
 @Composable
 fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     val gridLength = 10
-    val targetWords = 5
-    //val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
-    val gridData: List<GridData> = getLetters(wordMap, gridLength, targetWords)
+    val targetWords = 10
     val bgColor = Color.Green
+    val (gridData, pairs) = remember { getLetters(wordMap, gridLength, targetWords) }
 
     var id by remember { mutableIntStateOf(-1) }
     var id2 by remember { mutableIntStateOf(-1) }
     var cell by remember { mutableIntStateOf(-1) }
     var cell2 by remember { mutableIntStateOf(-1) }
-    val pairs = remember { mutableStateListOf<List<Int>>() }
+    //val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
+    //val pairs = remember { mutableStateListOf<List<Int>>() }
 
     // test v
     //pairs.add(listOf(1,6))
@@ -177,11 +177,27 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
             // check for valid pair
             if (id != -1 && id2 != -1) {
                 for (pair in pairs) {
-                    if (pair[0] == id && pair[1] == id2) {
+                    Log.d("find", "pair: $pair")
+                    Log.d("find", "id: $id, id2: $id2")
+
+                    val match1 = pair[0] == id && pair[1] == id2
+                    val match2 = pair[0] == id2 && pair[1] == id
+
+                    Log.d("find", "match1: $match1")
+                    Log.d("find", "match2: $match2")
+
+                    if (match1) {
                         cell = id
                         cell2 = id2
                         break
                     }
+
+                    if (match2) {
+                        cell = id2
+                        cell2 = id
+                        break
+                    }
+
                 }
 
                 id = -1
@@ -190,6 +206,8 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
 
             if (cell != -1 && cell2 != -1){
                 Text("id: $id, id2: $id2 \nWord found between grid cells #$cell and #$cell2")
+            } else {
+                Text("id: $id and id2: $id2")
             }
         }
     }
@@ -198,7 +216,7 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
 /**
  * Uses word bank to populate grid of letters
  */
-fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, targetWords: Int): List<GridData> {
+fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, targetWords: Int): Pair<List<GridData>, List<List<Int>>> {
     val rows = mutableListOf<StringBuilder>()
     val items = mutableListOf<GridData>()
     val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -217,12 +235,12 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
         val col = (0..<gridLength).random()
         var wordFound = false
 
-        Log.d("test", rows.toString())
-        Log.d("test", "Point: ($row,$col)")
+        Log.d("grid", rows.toString())
+        Log.d("grid", "Point: ($row,$col)")
 
         // determine direction
         val directions = Direction.getDirection(gridLength, row, col).shuffled()
-        Log.d("test", directions.toString())
+        Log.d("grid", directions.toString())
 
         for ((dir, len) in directions) {
             val constraints = mutableMapOf<Int, String>()
@@ -232,8 +250,8 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
                 val r2 = row + (dir.dy * i)
                 val c2 = col + (dir.dx * i)
 
-                Log.d("test", "i: $i")
-                Log.d("test", "r2,c2: ($r2,$c2)")
+                //Log.d("constraints", "i: $i")
+                //Log.d("constraints", "r2,c2: ($r2,$c2)")
 
                 val letter = rows[r2][c2].toString()
 
@@ -241,6 +259,8 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
                     constraints[i] = letter
                 }
             }
+
+            Log.d("constraints", constraints.toString())
 
             // check all words of that length
             val potentialWords = wordMap[len]?.shuffled()
@@ -258,9 +278,13 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
 
                         // store coordinate points
                         val p1 = (row * gridLength) + col + 1   // Note: Grid coordinates converted from 0-based string to 1-based grid system Ex. [0][0] --> index 1
-                        val dy = dir.dy * len
-                        val dx = dir.dx * len
+                        val dy = dir.dy * (len - 1)
+                        val dx = dir.dx * (len - 1)
                         val p2 = ((row + dy) * gridLength) + (col + dx) + 1
+
+                        Log.d("pairs", "row,col: ($row,$col)")
+                        Log.d("pairs", "p1,p2: ($p1,$p2)")
+                        Log.d("pairs", "word: $word")
 
                         pairs.add(listOf(p1, p2))
 
@@ -280,6 +304,8 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
         }
     }
 
+    Log.d("grid", "pairs: $pairs")
+
     // converts list of StringBuilder's to GridData
     var index = 1
 
@@ -296,7 +322,7 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
         }
     }
 
-    return items
+    return Pair(items, pairs)
 }
 
 /**
