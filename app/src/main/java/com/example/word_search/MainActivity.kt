@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.word_search.ui.theme.Word_SearchTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,11 +43,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.Room
 import java.io.File
 import com.example.word_search.Direction
+import com.example.word_search.WordBankItem
 
 class MainActivity : ComponentActivity() {
 //    private val db by lazy {
@@ -124,8 +125,9 @@ fun loadWords(context: Context, filename: String): MutableMap<Int, MutableList<S
 fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     val gridLength = 10
     val targetWords = 10
+    var wordsFound = 0
     val bgColor = Color.Green
-    val (gridData, pairs) = remember { getLetters(wordMap, gridLength, targetWords) }
+    val (gridData, pairs, words) = remember { getLetters(wordMap, gridLength, targetWords) }
 
     var id by remember { mutableIntStateOf(-1) }
     var id2 by remember { mutableIntStateOf(-1) }
@@ -134,26 +136,27 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
     //val gridData: List<GridData> = remember { getLetters(wordMap, gridLength) }
     //val pairs = remember { mutableStateListOf<List<Int>>() }
 
-    // test v
-    //pairs.add(listOf(1,6))
-
+    // Background green square
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = bgColor),
     ) {
+
+        // Grid of letters
         LazyVerticalGrid(
             columns = GridCells.Fixed(gridLength),
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier
-                .align(Alignment.Center)
+                .align(Alignment.TopCenter)
+                .padding(top = 100.dp)
                 .background(Color.White)
         ) {
+            // Buttons record where they were pressed
             items(gridData, key = {item -> item.id}) {data ->
                 GridItem(
                     item = data,
                     onClick = {
-//                        cur_pair.add(data.id)
                         if (id == -1) {
                             id = data.id
                         } else {
@@ -165,50 +168,46 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
             }
         }
 
-        Box(
-            contentAlignment = Alignment.Center,
+        // Word Bank
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier
-                .padding(top = 20.dp)
-                .height(100.dp)
-                .width(200.dp)
-                .background(Color.LightGray)
-                .align(Alignment.TopCenter)
+                .align(Alignment.BottomCenter)
+                .padding(start = 30.dp, end = 30.dp, bottom = 100.dp)
+                .background(Color.White)
         ) {
-            // check for valid pair
-            if (id != -1 && id2 != -1) {
-                for (pair in pairs) {
-                    Log.d("find", "pair: $pair")
-                    Log.d("find", "id: $id, id2: $id2")
-
-                    val match1 = pair[0] == id && pair[1] == id2
-                    val match2 = pair[0] == id2 && pair[1] == id
-
-                    Log.d("find", "match1: $match1")
-                    Log.d("find", "match2: $match2")
-
-                    if (match1) {
-                        cell = id
-                        cell2 = id2
-                        break
+            items(words) {word ->
+                var checked by remember {mutableStateOf(false)}
+                WordBankItem(
+                    text = word,
+                    checked = checked,
+                    onCheckedChange = {
+                        checked = it
                     }
+                )
+            }
+        }
 
-                    if (match2) {
-                        cell = id2
-                        cell2 = id
-                        break
-                    }
+        // check for valid pair
+        if (id != -1 && id2 != -1) {
+            for (pair in pairs) {
+                Log.d("find", "pair: $pair")
+                Log.d("find", "id: $id, id2: $id2")
 
+                val match1 = pair[0] == id && pair[1] == id2
+                val match2 = pair[0] == id2 && pair[1] == id
+
+                Log.d("find", "match1: $match1")
+                Log.d("find", "match2: $match2")
+
+                if (match1 or match2) {
+                    wordsFound++
+                    break
                 }
-
-                id = -1
-                id2 = -1
             }
 
-            if (cell != -1 && cell2 != -1){
-                Text("id: $id, id2: $id2 \nWord found between grid cells #$cell and #$cell2")
-            } else {
-                Text("id: $id and id2: $id2")
-            }
+            id = -1
+            id2 = -1
         }
     }
 }
@@ -216,11 +215,12 @@ fun InitGrid(wordMap: MutableMap<Int, MutableList<String>>) {
 /**
  * Uses word bank to populate grid of letters
  */
-fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, targetWords: Int): Pair<List<GridData>, List<List<Int>>> {
+fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, targetWords: Int): Triple<List<GridData>, List<List<Int>>, List<String>> {
     val rows = mutableListOf<StringBuilder>()
     val items = mutableListOf<GridData>()
     val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     val pairs = mutableStateListOf<List<Int>>()
+    val words = mutableStateListOf<String>()
 
     // initialize empty grid
     for (i in 1..gridLength) {
@@ -287,6 +287,7 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
                         Log.d("pairs", "word: $word")
 
                         pairs.add(listOf(p1, p2))
+                        words.add(word)
 
                         wordFound = true
                         count++
@@ -322,7 +323,7 @@ fun getLetters(wordMap: MutableMap<Int, MutableList<String>>, gridLength: Int, t
         }
     }
 
-    return Pair(items, pairs)
+    return Triple(items, pairs, words)
 }
 
 /**
